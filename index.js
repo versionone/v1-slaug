@@ -18,6 +18,14 @@ app.get('/cool', (req, res) => {
 	res.send(cool())
 })
 
+app.get('/times', (req, res) => {
+    var result = ''
+    var times = process.env.TIMES || 5
+    for (i=0; i < times; i++)
+      result += i + ' ';
+  res.send(result)
+})
+
 app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
 });
