@@ -20,7 +20,17 @@ function logRequest(req, res, next) {
 }
 
 function generateResponse(req, res) {
-	 res.send("Hello")
+	if (req.body) {
+		const text = req.body.text
+		if (text) {
+			const rx = /(?:ENV|GR|I|R|G|ST|T|TH|E|S|D|TS|TK|AT|RT|RS|RP|EI|PK|RD|FG|B)-\d+/ig
+			const matches = text.match(rx)
+			if (matches) {
+				return res.send(JSON.stringify({ text: matches.join('\n\n') }))
+			}
+		}
+	}
+	res.end()
 }
 
 const app = express();
