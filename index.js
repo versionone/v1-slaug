@@ -20,6 +20,7 @@ function logRequest(req, res, next) {
 }
 
 function generateResponse(req, res) {
+/*
 	if (req.body) {
 		const text = req.body.text
 		if (text) {
@@ -30,6 +31,7 @@ function generateResponse(req, res) {
 			}
 		}
 	}
+*/
 	res.end()
 }
 
