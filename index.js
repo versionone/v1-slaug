@@ -4,7 +4,13 @@ const log = require('./lib/log')
 const express = require('express')
 const bodyParser = require('body-parser')
 
-const recentlyMentioned = new Set()
+const _recentlyExpanded = new Set()
+const isRecentlyExpanded = (key) => _recentlyExpanded.has(key.toLowerCase())
+const rememberExpanded = (key) => {
+	key = key.toLowerCase()
+	_recentlyExpanded.add(key)
+	setTimeout(() => _recentlyExpanded.delete(key), 120 * 1000)
+}
 
 function processingTimer(req, res, next) {
 	const start = Date.now()
@@ -23,31 +29,59 @@ function logRequest(req, res, next) {
 	next()
 }
 
-const notRecentlyMentioned = (key) => !recentlyMentioned.has(key)
 
-const formatResponse = (key) => `${key} looks like an asset number`
+const assettypeMap = {
+	at: ['Test', 'BaseAsset'],
+	b: ['Story', 'BaseAsset'],
+	d: ['Defect', 'BaseAsset'],
+	e: ['Epic', 'BaseAsset'],
+	ei: ['ExternalActionInvokation', 'ExternalActionInvokation'],
+	env: ['Environment', 'Environment'],
+	fg: ['Theme', 'BaseAsset'],
+	g: ['Goal', 'BaseAsset'],
+	gr: ['Grant', 'Grant'],
+	i: ['Issue', 'BaseAsset'],
+	pk: ['Bundle', 'BaseAsset'],
+	r: ['Request', 'BaseAsset'],
+	//r: ['Story', 'BaseAsset'],
+	rd: ['Roadmap', 'BaseAsset'],
+	rp: ['RegressionPlan', 'BaseAsset'],
+	rs: ['RegressionSuite', 'BaseAsset'],
+	rt: ['RegressionTest', 'BaseAsset'],
+	s: ['Story', 'BaseAsset'],
+	st: ['StrategicTheme', 'BaseAsset'],
+	t: ['Topic', 'BaseAsset'],
+	th: ['Theme', 'BaseAsset'],
+	tk: ['Task', 'BaseAsset'],
+	ts: ['TestSet', 'BaseAsset'],
+}
 
 function generateResponse(req, res) {
-	if (req.body) {
-		const requestText = req.body.text
-		if (requestText) {
-			const rx = /(?:ENV|GR|I|R|G|ST|T|TH|E|S|D|TS|TK|AT|RT|RS|RP|EI|PK|RD|FG|B)-\d+/ig
-			let matches = requestText.match(rx)
-			if (matches) {
-				matches = matches.filter(notRecentlyMentioned)
-				const responses = []
-				for (let i = 0; i < matches.length; ++i) {
-					const id = matches[i]
-					responses.push(formatResponse(id))
-					recentlyMentioned.add(id)
-					setTimeout(() => recentlyMentioned.delete(id), 120 * 1000)
-				}
-				const responseText = responses.join('\n')
-				return res.send(JSON.stringify({ text: responseText }))
-			}
-		}
+	const requestText = req.body && req.body.text
+	if (!requestText) return res.end()
+
+	const responses = []
+	const rx = /\b([A-Z]+)-\d+\b/ig
+	let match
+	while ((match = rx.exec(requestText))) {
+		const id = match[0]
+		if (isRecentlyExpanded(id)) continue
+
+		const type = match[1].toLowerCase()
+		const assettype = assettypeMap[type]
+		if (!assettype) continue
+
+		responses.push(formatResponse(id, assettype))
+		rememberExpanded(id)
 	}
-	res.end()
+
+	if (!responses.length) return res.end()
+	const responseText = responses.join('\n')
+	return res.send(JSON.stringify({ text: responseText }))
+}
+
+function formatResponse(id, assettype) {
+	 return `${id} https://www7.v1host.com/V1Production/assetdetail.v1?Number=${id} https://www7.v1host.com/V1Production/rest-1.v1/Data/${assettype[0]}?deleted=true&sel=Name,AssetState,Number&where=Number='${id}'&accept=application/json`
 }
 
 const app = express();
