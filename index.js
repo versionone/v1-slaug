@@ -1,6 +1,10 @@
+"use strict";
+
 const log = require('./lib/log')
 const express = require('express')
 const bodyParser = require('body-parser')
+
+const recentlyMentioned = new Set()
 
 function processingTimer(req, res, next) {
 	const start = Date.now()
@@ -19,19 +23,30 @@ function logRequest(req, res, next) {
 	next()
 }
 
+const notRecentlyMentioned = (key) => !recentlyMentioned.has(key)
+
+const formatResponse = (key) => `${key} looks like an asset number`
+
 function generateResponse(req, res) {
-/*
 	if (req.body) {
-		const text = req.body.text
-		if (text) {
+		const requestText = req.body.text
+		if (requestText) {
 			const rx = /(?:ENV|GR|I|R|G|ST|T|TH|E|S|D|TS|TK|AT|RT|RS|RP|EI|PK|RD|FG|B)-\d+/ig
-			const matches = text.match(rx)
+			let matches = requestText.match(rx)
 			if (matches) {
-				return res.send(JSON.stringify({ text: matches.join('\n\n') }))
+				matches = matches.filter(notRecentlyMentioned)
+				const responses = []
+				for (let i = 0; i < matches.length; ++i) {
+					const id = matches[i]
+					responses.push(formatResponse(id))
+					recentlyMentioned.add(id)
+					setTimeout(() => recentlyMentioned.delete(id), 120 * 1000)
+				}
+				const responseText = responses.join('\n')
+				return res.send(JSON.stringify({ text: responseText }))
 			}
 		}
 	}
-*/
 	res.end()
 }
 
