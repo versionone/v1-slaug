@@ -35,11 +35,11 @@ const assettypeMap = {
 	b: ['Story', 'BaseAsset'],
 	d: ['Defect', 'BaseAsset'],
 	e: ['Epic', 'BaseAsset'],
-	ei: ['ExternalActionInvokation', 'ExternalActionInvokation'],
+	//ei: ['ExternalActionInvocation', 'ExternalActionInvocation'],
 	env: ['Environment', 'Environment'],
 	fg: ['Theme', 'BaseAsset'],
 	g: ['Goal', 'BaseAsset'],
-	gr: ['Grant', 'Grant'],
+	//gr: ['Grant', 'Grant'],
 	i: ['Issue', 'BaseAsset'],
 	pk: ['Bundle', 'BaseAsset'],
 	r: ['Request', 'BaseAsset'],
@@ -81,7 +81,7 @@ function generateResponse(req, res) {
 }
 
 function formatResponse(id, assettype) {
-	 return `${id} https://www7.v1host.com/V1Production/assetdetail.v1?Number=${id} https://www7.v1host.com/V1Production/rest-1.v1/Data/${assettype[0]}?deleted=true&sel=Name,AssetState,Number&where=Number='${id}'&accept=application/json`
+	 return `${id} https://www7.v1host.com/V1Production/assetdetail.v1?Number=${id} https://www7.v1host.com/V1Production/rest-1.v1/Data/${assettype[0]}?deleted=true&amp;accept=application/json&amp;sel=Name,AssetState,Number&amp;where=Number='${id}'`
 }
 
 const app = express();
