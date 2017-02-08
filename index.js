@@ -81,7 +81,7 @@ function generateResponse(req, res) {
 }
 
 function formatResponse(id, assettype) {
-	 return `${id} https://www7.v1host.com/V1Production/assetdetail.v1?Number=${id} https://www7.v1host.com/V1Production/rest-1.v1/Data/${assettype[0]}?deleted=true&amp;accept=application/json&amp;sel=Name,AssetState,Number&amp;where=Number='${id}'`
+	 return `*<https://www7.v1host.com/V1Production/assetdetail.v1?Number=${id}|${id}>* <https://www7.v1host.com/V1Production/rest-1.v1/Data/${assettype[0]}?deleted=true&amp;accept=application/json&amp;sel=Name,AssetState,Number&amp;where=Number=%27${id}%27|(rest-1)>`
 }
 
 const app = express();
