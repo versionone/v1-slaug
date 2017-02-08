@@ -1,1 +1,1 @@
-web: node index.js
+web: node v1-slaug.js

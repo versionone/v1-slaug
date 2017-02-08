@@ -1,6 +1,8 @@
 "use strict";
 
 const log = require('./lib/log')
+const Promise = require('bluebird')
+const request = require('request-promise')
 const express = require('express')
 const bodyParser = require('body-parser')
 

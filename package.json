@@ -1,27 +1,28 @@
 {
-  "name": "node-js-getting-started",
-  "version": "0.3.0",
-  "description": "A sample Node.js app using Express 4",
+  "name": "v1-slaug",
+  "version": "0.4.0",
+  "description": "VersionOne Slack Augmentation",
   "engines": {
     "node": ">=4.4.7"
   },
-  "main": "index.js",
+  "main": "v1-slaug.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node v1-slaug.js"
   },
   "dependencies": {
+    "bluebird": "^3.4.7",
     "body-parser": "^1.16.0",
-    "ejs": "^2.4.1",
-    "express": "^4.13.3"
+    "express": "^4.13.3",
+    "request": "^2.79.0",
+    "request-promise": "^4.1.1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/heroku/node-js-getting-started"
+    "url": "https://github.com/versionone/v1-slaug"
   },
   "keywords": [
-    "node",
-    "heroku",
-    "express"
+    "versionone",
+    "slack"
   ],
-  "license": "MIT"
+  "license": "BSD-3-Clause"
 }
