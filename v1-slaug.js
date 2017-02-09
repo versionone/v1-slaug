@@ -1,5 +1,7 @@
 "use strict";
 
+const PRODUCTION = process.env.NODE_ENV === 'production'
+
 const log = require('./log')
 const logError = err => log('ERROR', JSON.stringify(err.message))
 process.on('uncaughtException', err => { logError(err); throw err })
@@ -61,7 +63,7 @@ function respond(req, res) {
 }
 
 const errorResponse = (function() {
-	if (process.env.NODE_ENV === 'production') {
+	if (PRODUCTION) {
 		return res => err => {
 			logError(err)
 			res.end()
