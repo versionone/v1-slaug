@@ -143,25 +143,30 @@ function rememberExpansion(asset) {
 }
 
 const formatResponse = (function() {
+	const baseUrl = process.env.V1_URL
+
 	const encodings = {
 		'&': '&amp;',
 		'<': '&lt;',
 		'>': '&gt;',
 	}
-
 	const encoding = char => encodings[char]
 	const encode = text => text.replace(/[&<>]/g, encoding)
 
 	return (asset) => {
 		if (!asset) return null
+		const state = asset.state >= 255? 'deleted': asset.state >= 192? 'template': asset.state >= 128? 'closed': 'open'
+
+		const type = asset.type + (state === 'template'? ' Template': '')
+		let number = `*${asset.number}*`
 		const encodedName = encode(asset.name)
-		if (asset.state >= 255)
-			return `*${asset.type} ${asset.number}* (deleted) ~<https://www7.v1host.com/V1Production/assetdetail.v1?Number=${asset.number}|${encodedName}>~`
-		if (asset.state >= 192)
-			return `*${asset.type} Template ${asset.number}* <https://www7.v1host.com/V1Production/assetdetail.v1?Number=${asset.number}|${encodedName}>`
-		if (asset.state >= 128)
-			return `*${asset.type} ${asset.number}* (closed) ~<https://www7.v1host.com/V1Production/assetdetail.v1?Number=${asset.number}|${encodedName}>~`
-		return `*${asset.type} ${asset.number}* <https://www7.v1host.com/V1Production/assetdetail.v1?Number=${asset.number}|${encodedName}>`
+		let link = `<${baseUrl}/assetdetail.v1?Number=${asset.number}|${encodedName}>`
+		if (state === 'deleted' || state === 'closed') {
+			number = `${number} (${state})`
+			link = `~${link}~`
+		}
+
+		return `${type} ${number} ${link}`
 	}
 })()
 
