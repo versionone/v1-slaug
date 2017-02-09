@@ -44,16 +44,17 @@ function respond(req, res) {
 	const requestText = req.body && req.body.text
 	if (!requestText) return res.end()
 
-	const references = findMatches(requestText, /\b([A-Z]+)-\d+\b/ig, match => ({
-		number: match[0].toUpperCase(),
-		key: match[1].toUpperCase(),
+	const triggers = findMatches(requestText, /\b([A-Z]+)-\d+\b/ig, match => ({
+		handler: expandAssetNumber,
+		args: [match[0].toUpperCase(), match[1].toUpperCase()],
 		index: match.index,
 		length: match[0].length,
 	}))
-	if (!references.length) return res.end()
 
-	const promisedMessages = references
-		.map(expandAssetReference)
+	if (!triggers.length) return res.end()
+
+	const promisedMessages = triggers
+		.map(trigger => trigger.handler.apply(trigger, trigger.args))
 
 	Promise.all(promisedMessages)
 		.then(messages => {
@@ -86,15 +87,15 @@ function findMatches(text, rx, mapper) {
 	return matches
 }
 
-function expandAssetReference(ref) {
-	if (isRecentlyExpanded(ref.number)) return null
+function expandAssetNumber(number, key) {
+	if (isRecentlyExpanded(number)) return null
 
-	const assetTypeToken = assetTypes.get(ref.key)
+	const assetTypeToken = assetTypes.get(key)
 	if (!assetTypeToken) return null
 
 	const url = 'rest-1.v1/Data/' + assetTypeToken
 	const sel = 'AssetType,Name,AssetState,Number'
-	const where = `Number='${ref.number}'`
+	const where = `Number='${number}'`
 	const deleted = true
 
 	return v1request({ url, qs:{ sel, where, deleted } })
