@@ -184,9 +184,11 @@ app.set('x-powered-by', false)
 app.use(
 	processingTimer,
 	parseBody,
-	logRequest,
-	respond
+	logRequest
 )
+
+const endpoint = '/' + (process.env.SLAUG_SECRET || '')
+app.post(endpoint, respond)
 
 function start(app, port) {
 	app.set('port', port);
