@@ -142,6 +142,7 @@ function expandAssetReference(ref) {
 			const asset = response.Assets[0]
 			const attributes = asset.Attributes
 			return {
+				type: ref.assettype,
 				id: asset.id,
 				number: attributes.Number.value,
 				name: attributes.Name.value,
@@ -173,7 +174,13 @@ const formatResponse = (function() {
 	return (asset) => {
 		if (!asset) return null
 		const encodedName = encode(asset.name)
-		return `*${asset.number}* <https://www7.v1host.com/V1Production/assetdetail.v1?Number=${asset.number}|${encodedName}>`
+		if (asset.state >= 255)
+			return `*${asset.type} ${asset.number}* (deleted) ~<https://www7.v1host.com/V1Production/assetdetail.v1?Number=${asset.number}|${encodedName}>~`
+		if (asset.state >= 192)
+			return `*${asset.type} Template ${asset.number}* <https://www7.v1host.com/V1Production/assetdetail.v1?Number=${asset.number}|${encodedName}>`
+		if (asset.state >= 128)
+			return `*${asset.type} ${asset.number}* (closed) ~<https://www7.v1host.com/V1Production/assetdetail.v1?Number=${asset.number}|${encodedName}>~`
+		return `*${asset.type} ${asset.number}* <https://www7.v1host.com/V1Production/assetdetail.v1?Number=${asset.number}|${encodedName}>`
 	}
 })()
 
