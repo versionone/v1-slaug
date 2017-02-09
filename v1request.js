@@ -1,6 +1,7 @@
 ﻿"use strict";
 
 const request = require('request-promise')
+//request.debug = true
 
 const baseUrl = process.env.V1_URL
 if (!baseUrl)
@@ -20,6 +21,7 @@ const v1request = request.defaults({
 		Accept: 'application/json',
 		Authorization,
 	},
+	json: true,
 })
 
 module.exports = v1request

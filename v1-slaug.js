@@ -114,7 +114,6 @@ function expandAssetReference(ref) {
 	const deleted = true
 
 	return v1request({ url, qs:{ sel, where, deleted } })
-		.then(JSON.parse)
 		.then(response => {
 			if (!response || !response.Assets || !response.Assets.length) return null
 			const asset = response.Assets[0]
