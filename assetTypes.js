@@ -28,22 +28,17 @@ const keysTokens = [
 	['TS', 'TestSet'],
 ]
 
-const map = new Map(keysTokens.map(keyToken => [
-	keyToken[0],
-	{
-		key: keyToken[0],
-		token: keyToken[1],
-		name: keyToken[1],	// provisional name
-	}
-]))
+const map = new Map(keysTokens)
+
+const localizations = new Map()
 
 function fetchLocalizations() {
 	const tokens = keysTokens.map(keyToken => keyToken[1])
 	const qs =JSON.stringify(tokens)
 	v1request({ url: 'loc-2.v1?' + qs })
 		.then(names => {
-			for (let assetType of map.values())
-				assetType.name = names[assetType.token] || assetType.name
+			for (let token of Object.keys(names))
+				localizations.set(token, names[token])
 		})
 		.catch(err => log('ERROR loc-2.v1', JSON.stringify(err.message)))
 }
@@ -52,4 +47,5 @@ fetchLocalizations()
 
 module.exports = {
 	get: key => map.get(key.toUpperCase()),
+	localize: token => localizations.get(token) || token
 }

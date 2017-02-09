@@ -88,25 +88,25 @@ function findMatches(text, rx, mapper) {
 function expandAssetReference(ref) {
 	if (isRecentlyExpanded(ref.number)) return null
 
-	const assetType = assetTypes.get(ref.key)
-	if (!assetType) return null
+	const assetTypeToken = assetTypes.get(ref.key)
+	if (!assetTypeToken) return null
 
-	const url = 'rest-1.v1/Data/' + assetType.token
-	const sel = 'Name,AssetState,Number'
+	const url = 'rest-1.v1/Data/' + assetTypeToken
+	const sel = 'AssetType,Name,AssetState,Number'
 	const where = `Number='${ref.number}'`
 	const deleted = true
 
 	return v1request({ url, qs:{ sel, where, deleted } })
-		.then(response => {
-			if (!response || !response.Assets || !response.Assets.length)
+		.then(results => {
+			if (!results || !results.Assets || !results.Assets.length)
 				return null
-			const asset = response.Assets[0]
+			const asset = results.Assets[0]
 			const attributes = asset.Attributes
 			return {
-				type: assetType.name,
+				type: assetTypes.localize(assetTypeToken),
 				id: asset.id,
 				number: attributes.Number.value,
-				name: attributes.Name.value,
+				title: attributes.Name.value,
 				state: attributes.AssetState.value,
 			}
 		})
@@ -126,13 +126,14 @@ function rememberExpansion(asset) {
 const formatResponse = (function() {
 	const baseUrl = process.env.V1_URL
 
-	const encodings = {
+	// see https://api.slack.com/docs/message-formatting#how_to_escape_characters
+	const escapes = {
 		'&': '&amp;',
 		'<': '&lt;',
 		'>': '&gt;',
 	}
-	const encoding = char => encodings[char]
-	const encode = text => text.replace(/[&<>]/g, encoding)
+	const escape = char => escapes[char]
+	const slackEscape = text => text.replace(/[&<>]/g, escape)
 
 	return (asset) => {
 		if (!asset) return null
@@ -140,8 +141,9 @@ const formatResponse = (function() {
 
 		const type = asset.type + (state === 'template'? ' Template': '')
 		let number = `*${asset.number}*`
-		const encodedName = encode(asset.name)
-		let link = `<${baseUrl}/assetdetail.v1?Number=${asset.number}|${encodedName}>`
+		const href = `${baseUrl}/assetdetail.v1?Number=${asset.number}`
+		const title = slackEscape(asset.title)
+		let link = `<${href}|${title}>`
 		if (state === 'deleted' || state === 'closed') {
 			number = `${number} (${state})`
 			link = `~${link}~`
