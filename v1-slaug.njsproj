@@ -16,8 +16,8 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
   <ItemGroup>
-    <Compile Include="lib\datetime.js" />
-    <Compile Include="lib\log.js" />
+    <Compile Include="datetime.js" />
+    <Compile Include="log.js" />
     <Compile Include="v1request.js" />
     <Content Include=".gitignore" />
     <Content Include="app.json" />
@@ -27,7 +27,6 @@
     <Compile Include="v1-slaug.js" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="lib\" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />
     <Folder Include="typings\globals\node\" />
