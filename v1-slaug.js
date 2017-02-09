@@ -178,6 +178,9 @@ const formatResponse = (function() {
 })()
 
 const app = express();
+app.set('etag', false)
+app.set('query parser', 'simple')
+app.set('x-powered-by', false)
 app.use(
 	processingTimer,
 	parseBody,
