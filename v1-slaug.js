@@ -9,6 +9,7 @@ const Promise = require('bluebird')
 const express = require('express')
 const bodyParser = require('body-parser')
 const v1request = require('./v1request')
+const assetTypes = require('./assetTypes')
 
 const truthy = value => !!value
 
@@ -37,44 +38,18 @@ function logRequest(req, res, next) {
 	next()
 }
 
-const assettypeMap = {
-	at: 'Test',
-	b: 'Story',
-	d: 'Defect',
-	e: 'Epic',
-	//ei: 'ExternalActionInvocation',
-	env: 'Environment',
-	fg: 'Theme',
-	g: 'Goal',
-	//gr: 'Grant',
-	i: 'Issue',
-	pk: 'Bundle',
-	r: 'Request',
-	//r: 'Story',
-	rd: 'Roadmap',
-	rp: 'RegressionPlan',
-	rs: 'RegressionSuite',
-	rt: 'RegressionTest',
-	s: 'Story',
-	st: 'StrategicTheme',
-	t: 'Topic',
-	th: 'Theme',
-	tk: 'Task',
-	ts: 'TestSet',
-}
-
 function respond(req, res) {
 	const requestText = req.body && req.body.text
 	if (!requestText) return res.end()
 
-	const matches = findMatches(requestText, /\b([A-Z]+)-\d+\b/ig, match => ({
+	const references = findMatches(requestText, /\b([A-Z]+)-\d+\b/ig, match => ({
 		number: match[0].toUpperCase(),
-		assettype: assettypeMap[ match[1].toLowerCase() ],
+		key: match[1],
 		order: match.index,
 	}))
-	if (!matches.length) return res.end()
+	if (!references.length) return res.end()
 
-	const promisedMessages = matches
+	const promisedMessages = references
 		.map(expandAssetReference)
 
 	Promise.all(promisedMessages)
@@ -100,30 +75,33 @@ const errorResponse = (function() {
 	}
 })()
 
-function findMatches(text, rx, map) {
+function findMatches(text, rx, mapper) {
 	const matches = []
 	let match
 	while ((match = rx.exec(text)))
-		matches.push(map(match))
+		matches.push(mapper(match))
 	return matches
 }
 
 function expandAssetReference(ref) {
 	if (isRecentlyExpanded(ref.number)) return null
-	if (!ref.assettype) return null
 
-	const url = 'rest-1.v1/Data/' + ref.assettype
+	const assetType = assetTypes.get(ref.key)
+	if (!assetType) return null
+
+	const url = 'rest-1.v1/Data/' + assetType.token
 	const sel = 'Name,AssetState,Number'
 	const where = `Number='${ref.number}'`
 	const deleted = true
 
 	return v1request({ url, qs:{ sel, where, deleted } })
 		.then(response => {
-			if (!response || !response.Assets || !response.Assets.length) return null
+			if (!response || !response.Assets || !response.Assets.length)
+				return null
 			const asset = response.Assets[0]
 			const attributes = asset.Attributes
 			return {
-				type: ref.assettype,
+				type: assetType.name,
 				id: asset.id,
 				number: attributes.Number.value,
 				name: attributes.Name.value,
