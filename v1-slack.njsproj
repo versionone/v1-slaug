@@ -26,22 +26,16 @@
     <Compile Include="v1-slaug.js" />
     <Content Include="public\lang-logo.png" />
     <Content Include="public\node.svg" />
-    <Content Include="public\stylesheets\main.css" />
-    <Content Include="views\pages\db.ejs" />
     <Content Include="views\pages\index.ejs" />
     <Content Include="views\partials\header.ejs" />
     <Content Include="views\partials\nav.ejs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="lib\" />
-    <Folder Include="public" />
-    <Folder Include="public\stylesheets" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />
     <Folder Include="typings\globals\node\" />
     <Folder Include="typings\globals\request-promise\" />
-    <Folder Include="views" />
-    <Folder Include="views\pages" />
     <Folder Include="views\partials" />
   </ItemGroup>
   <ItemGroup>
