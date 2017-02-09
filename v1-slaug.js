@@ -1,6 +1,10 @@
 "use strict";
 
 const log = require('./log')
+const logError = err => log('ERROR', JSON.stringify(err.message))
+process.on('uncaughtException', err => { logError(err); throw err })
+process.on('unhandledRejection', err => { throw err })
+
 const Promise = require('bluebird')
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -84,13 +88,13 @@ function respond(req, res) {
 const errorResponse = (function() {
 	if (process.env.NODE_ENV === 'production') {
 		return res => err => {
-			log('ERROR', err.message)
+			logError(err)
 			res.end()
 		}
 	}
 	else {
 		return res => err => {
-			log('ERROR', err.message)
+			logError(err)
 			res.status(500).send(err)
 		}
 	}
