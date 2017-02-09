@@ -108,6 +108,7 @@ function expandAssetReference(ref) {
 				state: attributes.AssetState.value,
 			}
 		})
+		.then(asset => isRecentlyExpanded(asset.id) || isRecentlyExpanded(asset.number)? null: asset)
 		.then(rememberExpansion)
 		.then(formatResponse)
 }
