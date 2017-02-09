@@ -18,17 +18,13 @@
   <ItemGroup>
     <Compile Include="lib\datetime.js" />
     <Compile Include="lib\log.js" />
+    <Compile Include="v1request.js" />
     <Content Include=".gitignore" />
     <Content Include="app.json" />
     <Content Include="package.json" />
     <Content Include="Procfile" />
     <Content Include="README.md" />
     <Compile Include="v1-slaug.js" />
-    <Content Include="public\lang-logo.png" />
-    <Content Include="public\node.svg" />
-    <Content Include="views\pages\index.ejs" />
-    <Content Include="views\partials\header.ejs" />
-    <Content Include="views\partials\nav.ejs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="lib\" />
@@ -36,7 +32,6 @@
     <Folder Include="typings\globals\" />
     <Folder Include="typings\globals\node\" />
     <Folder Include="typings\globals\request-promise\" />
-    <Folder Include="views\partials" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="typings\globals\node\index.d.ts" />

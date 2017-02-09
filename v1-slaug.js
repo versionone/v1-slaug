@@ -2,9 +2,9 @@
 
 const log = require('./lib/log')
 const Promise = require('bluebird')
-const request = require('request-promise')
 const express = require('express')
 const bodyParser = require('body-parser')
+const v1request = require('./v1request')
 
 const truthy = value => !!value
 
@@ -104,38 +104,16 @@ function findMatches(text, rx, map) {
 	return matches
 }
 
-const instance = process.env.V1_INSTANCE
-if (!instance)
-	throw new Error("V1_INSTANCE is not defined")
-const urlBase = instance + '/rest-1.v1/Data/'
-
-const accessToken = process.env.V1_ACCESSTOKEN
-if (!accessToken)
-	throw new Error("V1_ACCESSTOKEN is not defined")
-const Authorization = 'Bearer ' + accessToken
-
-const v1request = request.defaults({
-	jar: true,
-	method: 'GET',
-	qs: {
-		deleted: 'true',
-		sel: 'Name,AssetState,Number',
-	},
-	headers: {
-		'User-Agent': 'v1-slaug',
-		Accept: 'application/json',
-		Authorization,
-	},
-})
-
 function expandAssetReference(ref) {
 	if (isRecentlyExpanded(ref.number)) return null
 	if (!ref.assettype) return null
 
-	const url = urlBase + ref.assettype
+	const url = 'rest-1.v1/Data/' + ref.assettype
+	const sel = 'Name,AssetState,Number'
 	const where = `Number='${ref.number}'`
+	const deleted = true
 
-	return v1request({ url, qs:{ where } })
+	return v1request({ url, qs:{ sel, where, deleted } })
 		.then(JSON.parse)
 		.then(response => {
 			if (!response || !response.Assets || !response.Assets.length) return null
