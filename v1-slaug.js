@@ -34,29 +34,29 @@ function logRequest(req, res, next) {
 }
 
 const assettypeMap = {
-	at: ['Test', 'BaseAsset'],
-	b: ['Story', 'BaseAsset'],
-	d: ['Defect', 'BaseAsset'],
-	e: ['Epic', 'BaseAsset'],
-	//ei: ['ExternalActionInvocation', 'ExternalActionInvocation'],
-	env: ['Environment', 'Environment'],
-	fg: ['Theme', 'BaseAsset'],
-	g: ['Goal', 'BaseAsset'],
-	//gr: ['Grant', 'Grant'],
-	i: ['Issue', 'BaseAsset'],
-	pk: ['Bundle', 'BaseAsset'],
-	r: ['Request', 'BaseAsset'],
-	//r: ['Story', 'BaseAsset'],
-	rd: ['Roadmap', 'BaseAsset'],
-	rp: ['RegressionPlan', 'BaseAsset'],
-	rs: ['RegressionSuite', 'BaseAsset'],
-	rt: ['RegressionTest', 'BaseAsset'],
-	s: ['Story', 'BaseAsset'],
-	st: ['StrategicTheme', 'BaseAsset'],
-	t: ['Topic', 'BaseAsset'],
-	th: ['Theme', 'BaseAsset'],
-	tk: ['Task', 'BaseAsset'],
-	ts: ['TestSet', 'BaseAsset'],
+	at: 'Test',
+	b: 'Story',
+	d: 'Defect',
+	e: 'Epic',
+	//ei: 'ExternalActionInvocation',
+	env: 'Environment',
+	fg: 'Theme',
+	g: 'Goal',
+	//gr: 'Grant',
+	i: 'Issue',
+	pk: 'Bundle',
+	r: 'Request',
+	//r: 'Story',
+	rd: 'Roadmap',
+	rp: 'RegressionPlan',
+	rs: 'RegressionSuite',
+	rt: 'RegressionTest',
+	s: 'Story',
+	st: 'StrategicTheme',
+	t: 'Topic',
+	th: 'Theme',
+	tk: 'Task',
+	ts: 'TestSet',
 }
 
 function respond(req, res) {
@@ -65,7 +65,7 @@ function respond(req, res) {
 
 	const matches = findMatches(requestText, /\b([A-Z]+)-\d+\b/ig, match => ({
 		number: match[0].toUpperCase(),
-		assettype: assettypeMap[ match[1].toLowerCase() ][0],
+		assettype: assettypeMap[ match[1].toLowerCase() ],
 		order: match.index,
 	}))
 	if (!matches.length) return res.end()
@@ -76,9 +76,7 @@ function respond(req, res) {
 	Promise.all(promisedMessages)
 		.then(messages => {
 			const responseText = messages.filter(truthy).join('\n')
-			res
-				.type('application/json')
-				.send({ text: responseText })
+			res.send({ text: responseText })
 		})
 		.catch(errorResponse(res))
 }
@@ -155,8 +153,10 @@ function expandAssetReference(ref) {
 }
 
 function rememberExpansion(asset) {
-	rememberExpanded(asset.id)
-	rememberExpanded(asset.number)
+	if (asset) {
+		rememberExpanded(asset.id)
+		rememberExpanded(asset.number)
+	}
 	return asset
 }
 
