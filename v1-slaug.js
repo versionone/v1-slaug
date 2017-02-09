@@ -46,8 +46,9 @@ function respond(req, res) {
 
 	const references = findMatches(requestText, /\b([A-Z]+)-\d+\b/ig, match => ({
 		number: match[0].toUpperCase(),
-		key: match[1],
-		order: match.index,
+		key: match[1].toUpperCase(),
+		index: match.index,
+		length: match[0].length,
 	}))
 	if (!references.length) return res.end()
 
@@ -103,7 +104,7 @@ function expandAssetReference(ref) {
 			const asset = results.Assets[0]
 			const attributes = asset.Attributes
 			return {
-				type: assetTypes.localize(assetTypeToken),
+				assetType: attributes.AssetType.value,
 				id: asset.id,
 				number: attributes.Number.value,
 				title: attributes.Name.value,
@@ -139,7 +140,7 @@ const formatResponse = (function() {
 		if (!asset) return null
 		const state = asset.state >= 255? 'deleted': asset.state >= 192? 'template': asset.state >= 128? 'closed': 'open'
 
-		const type = asset.type + (state === 'template'? ' Template': '')
+		const type = assetTypes.localize(asset.assetType) + (state === 'template'? ' Template': '')
 		let number = `*${asset.number}*`
 		const href = `${baseUrl}/assetdetail.v1?Number=${asset.number}`
 		const title = slackEscape(asset.title)

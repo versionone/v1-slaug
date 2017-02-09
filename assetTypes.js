@@ -46,6 +46,6 @@ function fetchLocalizations() {
 fetchLocalizations()
 
 module.exports = {
-	get: key => map.get(key.toUpperCase()),
+	get: key => map.get(key),
 	localize: token => localizations.get(token) || token
 }
