@@ -101,40 +101,9 @@ function assetOidTrigger(match) {
 	}
 }
 
-function notRecentlyExpanded(asset) {
-	return !asset || isRecentlyExpanded(asset.oid) || isRecentlyExpanded(asset.number)? null: asset
-}
-
 function expandAssetOid(oid, assetType, assetID) {
-	if (isRecentlyExpanded(oid)) return null
-
-	assetType = assetTypes.get(assetType)
-	if (!assetType) return null
-
-	const url = 'rest-1.v1/Data/' + assetType
-	const sel = 'AssetType,Name,AssetState,Number'
-	const where = `Key='${assetID}'`
-	const deleted = true
-
-	return v1request({ url, qs:{ sel, where, deleted } })
-		.then(results => {
-			if (!results || !results.Assets || !results.Assets.length)
-				return null
-			const asset = results.Assets[0]
-			const attributes = asset.Attributes
-			return {
-				assetType: attributes.AssetType.value,
-				oid: asset.id,
-				number: attributes.Number.value,
-				title: attributes.Name.value,
-				state: attributes.AssetState.value,
-			}
-		})
-		.then(notRecentlyExpanded)
-		.then(rememberExpansion)
-		.then(formatAsset)
+	return _expand(oid, assetType, 'Key', assetID)
 }
-
 
 function findAssetNumbers(post) {
 	return findMatches(post, /\b([A-Z]+)-\d+\b/ig, assetNumberTrigger)
@@ -150,14 +119,18 @@ function assetNumberTrigger(match) {
 }
 
 function expandAssetNumber(number, key) {
-	if (isRecentlyExpanded(number)) return null
+	return _expand(number, key, 'Number', number)
+}
 
-	const assetType = assetTypes.get(key)
+function _expand(identifier, assetType, field, value) {
+	if (isRecentlyExpanded(identifier)) return null
+
+	assetType = assetTypes.get(assetType)
 	if (!assetType) return null
 
 	const url = 'rest-1.v1/Data/' + assetType
 	const sel = 'AssetType,Name,AssetState,Number'
-	const where = `Number='${number}'`
+	const where = `${field}='${value}'`
 	const deleted = true
 
 	return v1request({ url, qs:{ sel, where, deleted } })
@@ -177,6 +150,10 @@ function expandAssetNumber(number, key) {
 		.then(notRecentlyExpanded)
 		.then(rememberExpansion)
 		.then(formatAsset)
+}
+
+function notRecentlyExpanded(asset) {
+	return !asset || isRecentlyExpanded(asset.oid) || isRecentlyExpanded(asset.number)? null: asset
 }
 
 function rememberExpansion(asset) {
