@@ -97,26 +97,47 @@ function findMatches(text, rx, mapper) {
 }
 
 function searchTriggers(post) {
-	const rx = /v1\s+find\s+(.+)/i
+	const rx = /v1\s+find\s+((?:\/\w+\s+)*)(.+)/i
 	const match = rx.exec(post)
 	if (!match) return []
 	return {
 		handler: expandSearch,
-		args: [match[1]],
+		args: match,
 		index: match.index,
 		length: match[0].length,
 	}
 }
 
-function expandSearch(find) {
-
+function expandSearch(_, options, find) {
 	const url = 'rest-1.v1/Data/BaseAsset'
 	const sel = 'AssetType,Name,AssetState,' + assetTypes.numberFields.join(',')
-	const where = 'AssetType=' + assetTypes.tokens.map(token => `'${token}'`).join(',')
+	let where = 'AssetType=' + assetTypes.tokens.map(token => `'${token}'`).join(',')
 	const findin = 'Name,Description'
 	const deleted = false
-	const page = '10,0'
+	let page = '10,0'
 	const sort = '-ChangeDateUTC'
+
+	const rx = /\/(\w+)/g
+	let match
+	while ((match = rx.exec(options))) {
+		const option = match[1].toLowerCase()
+
+		const top = Number(option)
+		if (top) {
+			page = `${Math.min(top,200)},0`
+			continue
+		}
+
+		if (option === 'open') {
+			where += ";AssetState!='Closed'"
+			continue
+		}
+
+		if (option === 'closed') {
+			where += ";AssetState='Closed'"
+			continue
+		}
+	}
 
 	return v1request({ url, qs:{ sel, where, deleted, findin, find, page, sort } })
 		.then(results => {
