@@ -1,6 +1,8 @@
 "use strict";
 
+const PORT = Number(process.env.PORT) || 61525
 const PRODUCTION = process.env.NODE_ENV === 'production'
+const MEMORY = Number(process.env.SLAUG_MEMORY) || 120 * 1000
 
 const log = require('./log')
 const logError = err => log('ERROR', JSON.stringify(err.message))
@@ -20,7 +22,7 @@ const isRecentlyExpanded = (key) => _recentlyExpanded.has(key.toLowerCase())
 const rememberExpanded = (key) => {
 	key = key.toLowerCase()
 	_recentlyExpanded.add(key)
-	setTimeout(() => _recentlyExpanded.delete(key), 120 * 1000)
+	setTimeout(() => _recentlyExpanded.delete(key), MEMORY)
 }
 
 function processingTimer(req, res, next) {
@@ -173,4 +175,4 @@ function start(app, port) {
 	app.listen(port, log.defer('listening', port))
 }
 
-start(app, process.env.PORT || 61525)
+start(app, PORT)
