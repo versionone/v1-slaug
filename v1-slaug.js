@@ -14,7 +14,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const v1request = require('./v1request')
 const assetTypes = require('./assetTypes')
-const formatAsset = require('./format-asset')
+const format = require('./format-asset')
 
 const truthy = value => !!value
 
@@ -49,8 +49,9 @@ function respond(req, res) {
 	if (!post) return res.end()
 
 	let triggers = []
-	triggers = triggers.concat(findAssetNumbers(post))
-	triggers = triggers.concat(findAssetOids(post))
+	triggers = triggers.concat(searchTriggers(post))
+	if (!triggers.length)
+		triggers = triggers.concat(assetNumberTriggers(post)).concat(assetOidTriggers(post))
 	if (!triggers.length) return res.end()
 
 	const promisedMessages = triggers
@@ -87,8 +88,53 @@ function findMatches(text, rx, mapper) {
 	return matches
 }
 
+function searchTriggers(post) {
+	const rx = /v1\s+find\s+(.+)/i
+	const match = rx.exec(post)
+	if (!match) return []
+	return {
+		handler: expandSearch,
+		args: [match[1]],
+		index: match.index,
+		length: match[0].length,
+	}
+}
 
-function findAssetOids(post) {
+function expandSearch(find) {
+
+	const url = 'rest-1.v1/Data/BaseAsset'
+	const sel = 'AssetType,Name,AssetState,' + assetTypes.numberFields.join(',')
+	const where = 'AssetType=' + assetTypes.tokens.map(token => `'${token}'`).join(',')
+	const findin = 'Name,Description'
+	const deleted = false
+	const page = '10,0'
+	const sort = '-ChangeDateUTC'
+
+	return v1request({ url, qs:{ sel, where, deleted, findin, find, page, sort } })
+		.then(results => {
+			if (!results || !results.Assets || !results.Assets.length)
+				return "Sorry, nothing found"
+
+			const assets = results.Assets.map(asset => {
+				const attributes = asset.Attributes
+				return {
+					assetType: attributes.AssetType.value,
+					oid: asset.id,
+					number: attributes.Number.value,
+					title: attributes.Name.value,
+					state: attributes.AssetState.value,
+				}
+			})
+
+			const messages = assets.map(format.asset)
+			if (results.total > results.pageSize)
+				messages.push(format.search(find))
+
+			return  messages.filter(truthy).join('\n')
+		})
+}
+
+function assetOidTriggers(post) {
 	return findMatches(post, /\b([A-Z]+)(?:\:|%3a)(\d+)\b/ig, assetOidTrigger)
 }
 
@@ -105,7 +151,7 @@ function expandAssetOid(oid, assetType, assetID) {
 	return _expand(oid, assetType, 'Key', assetID)
 }
 
-function findAssetNumbers(post) {
+function assetNumberTriggers(post) {
 	return findMatches(post, /\b([A-Z]+)-\d+\b/ig, assetNumberTrigger)
 }
 
@@ -149,7 +195,7 @@ function _expand(identifier, assetType, field, value) {
 		})
 		.then(notRecentlyExpanded)
 		.then(rememberExpansion)
-		.then(formatAsset)
+		.then(format.asset)
 }
 
 function notRecentlyExpanded(asset) {

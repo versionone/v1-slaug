@@ -8,12 +8,12 @@ const keysTokens = [
 	['D', 'Defect'],
 	['E', 'Epic'],
 	//['EI', 'ExternalActionInvocation'],
-	['ENV', 'Environment'],
+	//['ENV', 'Environment'],
 	['FG', 'Theme'],
 	['G', 'Goal'],
 	//['GR', 'Grant'],
 	['I', 'Issue'],
-	['PK', 'Bundle'],
+	//['PK', 'Bundle'],
 	['R', 'Request'],
 	//['R', 'Story'],
 	['RD', 'Roadmap'],
@@ -28,6 +28,9 @@ const keysTokens = [
 	['TS', 'TestSet'],
 ]
 
+const tokens = keysTokens.map(keyToken => keyToken[1])
+const numberFields = tokens.map(token => token + '.Number')
+
 const map = new Map(keysTokens)
 for (let token of map.values())
 	map.set(token.toUpperCase(), token)
@@ -35,7 +38,6 @@ for (let token of map.values())
 const localizations = new Map()
 
 function fetchLocalizations() {
-	const tokens = keysTokens.map(keyToken => keyToken[1])
 	const qs =JSON.stringify(tokens)
 	v1request({ url: 'loc-2.v1?' + qs })
 		.then(names => {
@@ -48,6 +50,8 @@ function fetchLocalizations() {
 fetchLocalizations()
 
 module.exports = {
+	tokens,
+	numberFields,
 	get: key => map.get(key.toUpperCase()),
-	localize: token => localizations.get(token) || token
+	localize: token => localizations.get(token) || token,
 }

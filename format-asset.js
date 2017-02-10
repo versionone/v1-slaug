@@ -37,4 +37,13 @@ function formatAsset(asset) {
 	return `${type} ${number}${decorator} ${styledLink}`
 }
 
-module.exports = formatAsset
+function formatSearch(q) {
+	const query = slackEscape(encodeURIComponent(q))
+	const href = `${baseUrl}/Search.mvc/Advanced?q=${query}`
+	return `<${href}|More...>`
+}
+
+module.exports = {
+	asset: formatAsset,
+	search: formatSearch,
+}
