@@ -43,22 +43,17 @@ function logRequest(req, res, next) {
 }
 
 function respond(req, res) {
-	const requestText = req.body && req.body.text
-	if (!requestText) return res.end()
+	const post = req.body && req.body.text
+	if (!post) return res.end()
 
-	const triggers = findMatches(requestText, /\b([A-Z]+)-\d+\b/ig, match => ({
-		handler: expandAssetNumber,
-		args: [match[0].toUpperCase(), match[1].toUpperCase()],
-		index: match.index,
-		length: match[0].length,
-	}))
-
+	let triggers = []
+	triggers = triggers.concat(findAssetNumbers(post))
 	if (!triggers.length) return res.end()
 
 	const promisedMessages = triggers
 		.map(trigger => trigger.handler.apply(trigger, trigger.args))
 
-	Promise.all(promisedMessages)
+	return Promise.all(promisedMessages)
 		.then(messages => {
 			const responseText = messages.filter(truthy).join('\n')
 			res.send({ text: responseText })
@@ -87,6 +82,19 @@ function findMatches(text, rx, mapper) {
 	while ((match = rx.exec(text)))
 		matches.push(mapper(match))
 	return matches
+}
+
+function findAssetNumbers(post) {
+	return findMatches(post, /\b([A-Z]+)-\d+\b/ig, assetNumberTrigger)
+}
+
+function assetNumberTrigger(match) {
+	return {
+		handler: expandAssetNumber,
+		args: [match[0].toUpperCase(), match[1].toUpperCase()],
+		index: match.index,
+		length: match[0].length,
+	}
 }
 
 function expandAssetNumber(number, key) {
