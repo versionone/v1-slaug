@@ -18,6 +18,7 @@
   <ItemGroup>
     <Compile Include="assetTypes.js" />
     <Compile Include="datetime.js" />
+    <Compile Include="format-asset.js" />
     <Compile Include="log.js" />
     <Compile Include="v1request.js" />
     <Content Include=".gitignore" />

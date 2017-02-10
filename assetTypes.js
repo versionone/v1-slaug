@@ -29,6 +29,8 @@ const keysTokens = [
 ]
 
 const map = new Map(keysTokens)
+for (let token of map.values())
+	map.set(token.toUpperCase(), token)
 
 const localizations = new Map()
 
@@ -46,6 +48,6 @@ function fetchLocalizations() {
 fetchLocalizations()
 
 module.exports = {
-	get: key => map.get(key),
+	get: key => map.get(key.toUpperCase()),
 	localize: token => localizations.get(token) || token
 }

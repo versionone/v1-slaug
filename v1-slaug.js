@@ -14,13 +14,15 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const v1request = require('./v1request')
 const assetTypes = require('./assetTypes')
+const formatAsset = require('./format-asset')
 
 const truthy = value => !!value
 
 const _recentlyExpanded = new Set()
-const isRecentlyExpanded = (key) => _recentlyExpanded.has(key.toLowerCase())
+const normalizeKey = key => key.toUpperCase().replace('%3A', ':')
+const isRecentlyExpanded = (key) => _recentlyExpanded.has(normalizeKey(key))
 const rememberExpanded = (key) => {
-	key = key.toLowerCase()
+	key = normalizeKey(key)
 	_recentlyExpanded.add(key)
 	setTimeout(() => _recentlyExpanded.delete(key), MEMORY)
 }
@@ -48,6 +50,7 @@ function respond(req, res) {
 
 	let triggers = []
 	triggers = triggers.concat(findAssetNumbers(post))
+	triggers = triggers.concat(findAssetOids(post))
 	if (!triggers.length) return res.end()
 
 	const promisedMessages = triggers
@@ -84,6 +87,55 @@ function findMatches(text, rx, mapper) {
 	return matches
 }
 
+
+function findAssetOids(post) {
+	return findMatches(post, /\b([A-Z]+)(?:\:|%3a)(\d+)\b/ig, assetOidTrigger)
+}
+
+function assetOidTrigger(match) {
+	return {
+		handler: expandAssetOid,
+		args: match,
+		index: match.index,
+		length: match[0].length,
+	}
+}
+
+function notRecentlyExpanded(asset) {
+	return !asset || isRecentlyExpanded(asset.oid) || isRecentlyExpanded(asset.number)? null: asset
+}
+
+function expandAssetOid(oid, assetType, assetID) {
+	if (isRecentlyExpanded(oid)) return null
+
+	assetType = assetTypes.get(assetType)
+	if (!assetType) return null
+
+	const url = 'rest-1.v1/Data/' + assetType
+	const sel = 'AssetType,Name,AssetState,Number'
+	const where = `Key='${assetID}'`
+	const deleted = true
+
+	return v1request({ url, qs:{ sel, where, deleted } })
+		.then(results => {
+			if (!results || !results.Assets || !results.Assets.length)
+				return null
+			const asset = results.Assets[0]
+			const attributes = asset.Attributes
+			return {
+				assetType: attributes.AssetType.value,
+				oid: asset.id,
+				number: attributes.Number.value,
+				title: attributes.Name.value,
+				state: attributes.AssetState.value,
+			}
+		})
+		.then(notRecentlyExpanded)
+		.then(rememberExpansion)
+		.then(formatAsset)
+}
+
+
 function findAssetNumbers(post) {
 	return findMatches(post, /\b([A-Z]+)-\d+\b/ig, assetNumberTrigger)
 }
@@ -91,7 +143,7 @@ function findAssetNumbers(post) {
 function assetNumberTrigger(match) {
 	return {
 		handler: expandAssetNumber,
-		args: [match[0].toUpperCase(), match[1].toUpperCase()],
+		args: match,
 		index: match.index,
 		length: match[0].length,
 	}
@@ -100,10 +152,10 @@ function assetNumberTrigger(match) {
 function expandAssetNumber(number, key) {
 	if (isRecentlyExpanded(number)) return null
 
-	const assetTypeToken = assetTypes.get(key)
-	if (!assetTypeToken) return null
+	const assetType = assetTypes.get(key)
+	if (!assetType) return null
 
-	const url = 'rest-1.v1/Data/' + assetTypeToken
+	const url = 'rest-1.v1/Data/' + assetType
 	const sel = 'AssetType,Name,AssetState,Number'
 	const where = `Number='${number}'`
 	const deleted = true
@@ -116,54 +168,24 @@ function expandAssetNumber(number, key) {
 			const attributes = asset.Attributes
 			return {
 				assetType: attributes.AssetType.value,
-				id: asset.id,
+				oid: asset.id,
 				number: attributes.Number.value,
 				title: attributes.Name.value,
 				state: attributes.AssetState.value,
 			}
 		})
-		.then(asset => isRecentlyExpanded(asset.id) || isRecentlyExpanded(asset.number)? null: asset)
+		.then(notRecentlyExpanded)
 		.then(rememberExpansion)
-		.then(formatResponse)
+		.then(formatAsset)
 }
 
 function rememberExpansion(asset) {
 	if (asset) {
-		rememberExpanded(asset.id)
+		rememberExpanded(asset.oid)
 		rememberExpanded(asset.number)
 	}
 	return asset
 }
-
-const formatResponse = (function() {
-	const baseUrl = process.env.V1_URL
-
-	// see https://api.slack.com/docs/message-formatting#how_to_escape_characters
-	const escapes = {
-		'&': '&amp;',
-		'<': '&lt;',
-		'>': '&gt;',
-	}
-	const escape = char => escapes[char]
-	const slackEscape = text => text.replace(/[&<>]/g, escape)
-
-	return (asset) => {
-		if (!asset) return null
-		const state = asset.state >= 255? 'deleted': asset.state >= 192? 'template': asset.state >= 128? 'closed': 'open'
-
-		const type = assetTypes.localize(asset.assetType) + (state === 'template'? ' Template': '')
-		let number = `*${asset.number}*`
-		const href = `${baseUrl}/assetdetail.v1?Number=${asset.number}`
-		const title = slackEscape(asset.title)
-		let link = `<${href}|${title}>`
-		if (state === 'deleted' || state === 'closed') {
-			number = `${number} (${state})`
-			link = `~${link}~`
-		}
-
-		return `${type} ${number} ${link}`
-	}
-})()
 
 const app = express();
 app.set('etag', false)
