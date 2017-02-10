@@ -252,6 +252,10 @@ app.use(
 const endpoint = '/' + (process.env.SLAUG_SECRET || '')
 app.post(endpoint, ignoreSlackbot, respond)
 
+app.get('/status', (req, res) => {
+	res.send("OK. Listening on port " + PORT)
+})
+
 function start(app, port) {
 	app.set('port', port);
 	app.listen(port, log.defer('listening', port))
