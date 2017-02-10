@@ -44,6 +44,14 @@ function logRequest(req, res, next) {
 	next()
 }
 
+function ignoreSlackbot(req, res, next) {
+	const body = req.body
+	if (body && body.user_id === 'USLACKBOT')
+		res.end()
+	else
+		next()
+}
+
 function respond(req, res) {
 	const post = req.body && req.body.text
 	if (!post) return res.end()
@@ -221,7 +229,7 @@ app.use(
 )
 
 const endpoint = '/' + (process.env.SLAUG_SECRET || '')
-app.post(endpoint, respond)
+app.post(endpoint, ignoreSlackbot, respond)
 
 function start(app, port) {
 	app.set('port', port);
