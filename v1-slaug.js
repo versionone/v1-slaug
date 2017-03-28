@@ -71,6 +71,8 @@ function respond(req, res, next) {
 		.then(messages => {
 			const responseText = messages.filter(truthy).join('\n')
 			const responseBody = { text: responseText };
+			if (req.body.thread_ts)
+				responseBody.thread_ts = req.body.thread_ts
 			res.send(responseBody)
 			last = { request: req.body, response: responseBody }
 		})
