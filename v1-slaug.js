@@ -21,10 +21,10 @@ const truthy = value => !!value
 let last = {}
 
 const _recentlyExpanded = new Set()
-const normalizeKey = key => key.toUpperCase().replace('%3A', ':')
-const isRecentlyExpanded = (key) => _recentlyExpanded.has(normalizeKey(key))
-const rememberExpanded = (key) => {
-	key = normalizeKey(key)
+const normalizeKey = (key, channel) => key.toUpperCase().replace('%3A', ':') + '/' + (channel || '')
+const isRecentlyExpanded = (key, channel) => _recentlyExpanded.has(normalizeKey(key, channel))
+const rememberExpanded = (key, channel) => {
+	key = normalizeKey(key, channel)
 	_recentlyExpanded.add(key)
 	setTimeout(() => _recentlyExpanded.delete(key), MEMORY)
 }
@@ -167,8 +167,8 @@ function assetOidTrigger(match) {
 	}
 }
 
-function expandAssetOid(oid, assetType, assetID) {
-	return _expand(oid, assetType, 'Key', assetID)
+function expandAssetOid(oid, assetType, assetID, channel) {
+	return _expand(oid, assetType, 'Key', assetID, channel)
 }
 
 function assetNumberTriggers(post) {
@@ -184,12 +184,12 @@ function assetNumberTrigger(match) {
 	}
 }
 
-function expandAssetNumber(number, key) {
-	return _expand(number, key, 'Number', number)
+function expandAssetNumber(number, key, channel) {
+	return _expand(number, key, 'Number', number, channel)
 }
 
-function _expand(identifier, assetType, field, value) {
-	if (isRecentlyExpanded(identifier)) return null
+function _expand(identifier, assetType, field, value, channel) {
+	if (isRecentlyExpanded(identifier, channel)) return null
 
 	assetType = assetTypes.get(assetType)
 	if (!assetType) return null
@@ -211,6 +211,7 @@ function _expand(identifier, assetType, field, value) {
 				number: attributes.Number.value,
 				title: attributes.Name.value,
 				state: attributes.AssetState.value,
+				channel,
 			}
 		})
 		.then(notRecentlyExpanded)
@@ -219,13 +220,13 @@ function _expand(identifier, assetType, field, value) {
 }
 
 function notRecentlyExpanded(asset) {
-	return !asset || isRecentlyExpanded(asset.oid) || isRecentlyExpanded(asset.number)? null: asset
+	return !asset || isRecentlyExpanded(asset.oid, asset.channel) || isRecentlyExpanded(asset.number, asset.channel)? null: asset
 }
 
 function rememberExpansion(asset) {
 	if (asset) {
-		rememberExpanded(asset.oid)
-		rememberExpanded(asset.number)
+		rememberExpanded(asset.oid, asset.channel)
+		rememberExpanded(asset.number, asset.channel)
 	}
 	return asset
 }
