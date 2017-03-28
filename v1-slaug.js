@@ -18,6 +18,8 @@ const format = require('./format-asset')
 
 const truthy = value => !!value
 
+let last = {}
+
 const _recentlyExpanded = new Set()
 const normalizeKey = key => key.toUpperCase().replace('%3A', ':')
 const isRecentlyExpanded = (key) => _recentlyExpanded.has(normalizeKey(key))
@@ -70,6 +72,7 @@ function respond(req, res, next) {
 			const responseText = messages.filter(truthy).join('\n')
 			const responseBody = { text: responseText };
 			res.send(responseBody)
+			last = { request: req.body, response: responseBody }
 		})
 		.catch(err => next(err))
 }
@@ -225,6 +228,13 @@ function rememberExpansion(asset) {
 	return asset
 }
 
+function prettyJson(value) {
+	return safeHtml(JSON.stringify(value, null, 4))
+}
+function safeHtml(value) {
+	return (value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+}
+
 const app = express();
 app.set('etag', false)
 app.set('query parser', 'simple')
@@ -238,12 +248,25 @@ app.use(
 const endpoint = '/' + (process.env.SLAUG_SECRET || '')
 app.post(endpoint, ignoreSlackbot, respond)
 
+app.get(endpoint, (req, res) => {
+	res.type('html').send(`
+		<h3>Last request</h3>
+		<pre>${prettyJson(last.request)}</pre>
+		<h3>Last response</h3>
+		<pre>${prettyJson(last.response)}</pre>
+		<h3>Last error</h3>
+		<pre>${last.error? safeHtml(last.error.message): 'none'}</pre>
+		<pre>${prettyJson(last.error)}</pre>
+	`)
+})
+
 app.get('/status', (req, res) => {
 	res.send("OK. Listening on port " + PORT)
 })
 
 app.use((err, req, res, next) => {
 	logError(err)
+	last = { request: req.body, error: err }
 	next(err)
 })
 if (PRODUCTION)
