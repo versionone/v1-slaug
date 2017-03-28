@@ -52,7 +52,7 @@ function ignoreSlackbot(req, res, next) {
 		next()
 }
 
-function respond(req, res) {
+function respond(req, res, next) {
 	const post = req.body && req.body.text
 	if (!post) return res.end()
 
@@ -68,25 +68,11 @@ function respond(req, res) {
 	return Promise.all(promisedMessages)
 		.then(messages => {
 			const responseText = messages.filter(truthy).join('\n')
-			res.send({ text: responseText })
+			const responseBody = { text: responseText };
+			res.send(responseBody)
 		})
-		.catch(errorResponse(res))
+		.catch(err => next(err))
 }
-
-const errorResponse = (function() {
-	if (PRODUCTION) {
-		return res => err => {
-			logError(err)
-			res.end()
-		}
-	}
-	else {
-		return res => err => {
-			logError(err)
-			res.status(500).send(err)
-		}
-	}
-})()
 
 function findMatches(text, rx, mapper) {
 	const matches = []
@@ -255,6 +241,13 @@ app.post(endpoint, ignoreSlackbot, respond)
 app.get('/status', (req, res) => {
 	res.send("OK. Listening on port " + PORT)
 })
+
+app.use((err, req, res, next) => {
+	logError(err)
+	next(err)
+})
+if (PRODUCTION)
+	app.use((err, req, res, next) => res.end())
 
 function start(app, port) {
 	app.set('port', port);
