@@ -44,7 +44,7 @@ function fetchLocalizations() {
 			for (let token of Object.keys(names))
 				localizations.set(token, names[token])
 		})
-		.catch(err => log('ERROR loc-2.v1', JSON.stringify(err.message)))
+		.catch(err => { throw new Error('loc-2.v1 failed: ' + err.message) })
 }
 
 fetchLocalizations()
