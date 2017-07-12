@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "description": "VersionOne Slack Augmentation",
   "engines": {
-    "node": ">=4.4.7"
+    "node": ">=7.10.1"
   },
   "main": "v1-slaug.js",
   "scripts": {
