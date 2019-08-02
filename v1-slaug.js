@@ -168,7 +168,7 @@ function assetOidTrigger(match) {
 }
 
 function expandAssetOid(oid, assetType, assetID, channel) {
-	return _expand(oid, assetType, 'Key', assetID, channel)
+	return _expand(oid, assetType, 'ID', `${assetType}:${assetID}`, channel)
 }
 
 function assetNumberTriggers(post) {
