@@ -5,9 +5,9 @@
   "engines": {
     "node": ">=7.10.1"
   },
-  "main": "v1-slaug.js",
+  "main": "src/v1-slaug.js",
   "scripts": {
-    "start": "node v1-slaug.js"
+    "start": "node src/v1-slaug.js"
   },
   "dependencies": {
     "bluebird": "^3.4.7",

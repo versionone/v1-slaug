@@ -1,1 +1,1 @@
-web: node v1-slaug.js
+web: node src/v1-slaug.js
