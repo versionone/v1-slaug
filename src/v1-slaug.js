@@ -280,4 +280,11 @@ function start(app, port) {
 	app.listen(port, log.defer('listening', port))
 }
 
-start(app, PORT)
+function named_app(app) {
+	const appname = '/' + (process.env.APP_NAME || '');
+	const root = express();
+	root.use(appname, app);
+	return root;
+}
+
+start(named_app(app), PORT)
